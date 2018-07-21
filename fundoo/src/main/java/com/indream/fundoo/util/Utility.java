@@ -15,13 +15,19 @@ import org.apache.log4j.Logger;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.indream.fundoo.exceptionhandler.NoteException;
 import com.indream.fundoo.noteservice.model.NoteEntity;
 import com.indream.fundoo.noteservice.repository.NoteRepository;
+import com.indream.fundoo.userservice.model.MailEntity;
 import com.indream.fundoo.userservice.model.UserEntity;
 
 public class Utility {
 	final static Logger LOG = Logger.getLogger(Utility.class);
+	static final ObjectMapper jacksonMapper = new ObjectMapper();
 
 	@Autowired
 	static ModelMapper mapper;
@@ -115,7 +121,7 @@ public class Utility {
 	public static NoteEntity getNoteEntity(List<NoteEntity> noteEntities, String noteId) {
 
 		for (NoteEntity note : noteEntities) {
-			System.out.println(String.valueOf(note.getId())+"  ==  "+noteId);
+			System.out.println(String.valueOf(note.getId()) + "  ==  " + noteId);
 			if (String.valueOf(note.getId()).equals(noteId)) {
 				return note;
 			}
@@ -124,4 +130,32 @@ public class Utility {
 		throw new NoteException("note not found");
 
 	}
+
+	public static final <T> String covertToJSONString(T object) {
+
+		try {
+			return jacksonMapper.writeValueAsString(object);
+		} catch (JsonProcessingException e) {
+			throw new RuntimeException(e.getMessage());
+		}
+	}
+
+	public static <T> T convertFromJSONString(String message, Class<T> class1) {
+
+		
+		try {
+		return 	jacksonMapper.readValue(message, class1);
+		} catch (JsonParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (JsonMappingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}		
+		return null;
+	}
+
 }
