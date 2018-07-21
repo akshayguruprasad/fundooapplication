@@ -3,24 +3,24 @@ package com.indream.fundoo.userservice.service;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.log4j.Logger;
 import org.modelmapper.ModelMapper;
+import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import com.indream.fundoo.configuration.RabbitMqConfig;
 import com.indream.fundoo.exceptionhandler.UserException;
 import com.indream.fundoo.userservice.dto.UserEntityDTO;
+import com.indream.fundoo.userservice.model.MailEntity;
 import com.indream.fundoo.userservice.model.UserEntity;
 import com.indream.fundoo.userservice.repository.UserRepository;
-import com.indream.fundoo.util.MessageService;
 import com.indream.fundoo.util.TokenManager;
+import com.indream.fundoo.util.Utility;
 
 import io.jsonwebtoken.Claims;
 
 public class UserServiceImpl implements UserService {
 	final Logger LOG = Logger.getLogger(UserServiceImpl.class);
-
-	@Autowired
-	private MessageService springMessage;
 
 	@Autowired
 	private TokenManager manager;
@@ -36,6 +36,9 @@ public class UserServiceImpl implements UserService {
 
 	@Autowired
 	private ModelMapper mapper;
+
+	@Autowired
+	AmqpTemplate template;
 
 	@Override
 	public void registerUser(UserEntityDTO user) {
@@ -53,11 +56,22 @@ public class UserServiceImpl implements UserService {
 			user.setActive(false);// SAVE THE USER IN THE BASE
 			userEntity = mapper.map(user, UserEntity.class);
 			userEntity = repository.save(userEntity);
-			System.out.println(String.valueOf(userEntity.getId())+"-----------");
+			System.out.println(String.valueOf(userEntity.getId()) + "-----------");
 			String token = manager.generateToken(userEntity); // GENERATE AND BIND THE TOKEN TO URL
 			String message = env.getProperty("user.activation.link.prefix") + token
 					+ env.getProperty("user.activation.link.suffix");
-			springMessage.sendMessage(user.getEmail(), env.getProperty("user.activation.email.subject"), message);
+
+			MailEntity mail = new MailEntity();
+			mail.setSubject(env.getProperty("user.activation.email.subject"));
+			mail.setMessage(message);
+			mail.setTo(user.getEmail());
+
+			String mailString = Utility.covertToJSONString(mail);
+			template.convertAndSend(RabbitMqConfig.TOPICEXCHANGENAME, RabbitMqConfig.ROUTING_KEY, mailString);
+			System.out.println("send success");
+
+//need to send mail
+
 		} catch (UserException e) {
 			throw e;
 		} catch (RuntimeException e) {
@@ -135,9 +149,14 @@ public class UserServiceImpl implements UserService {
 			user.setPassword(newPassword);
 			user = repository.save(user);
 			String token = manager.generateToken(user);
-			springMessage.sendMessage(user.getEmail(), env.getProperty("user.reset.email.subject"),
-					env.getProperty("user.reset.link.link") + token);
-			System.out.println("------------this will print before the thread finishes its execution");
+			MailEntity mail = new MailEntity();
+			mail.setSubject(env.getProperty("user.activation.email.subject"));
+			mail.setMessage(env.getProperty("user.reset.link.link") + token);
+			mail.setTo(user.getEmail());
+
+			String mailString = Utility.covertToJSONString(mail);
+			template.convertAndSend(RabbitMqConfig.TOPICEXCHANGENAME, RabbitMqConfig.ROUTING_KEY, mailString);
+
 		} catch (UserException e) {
 			throw e;
 		} catch (RuntimeException e) {
