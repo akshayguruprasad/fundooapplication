@@ -8,11 +8,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.indream.fundoo.userservice.dto.UserEntityDTO;
+import com.indream.fundoo.userservice.model.UserDto;
 import com.indream.fundoo.userservice.model.UserResponse;
 import com.indream.fundoo.userservice.service.UserService;
 
@@ -25,7 +26,7 @@ public class UserController {
 	final Logger LOG = Logger.getLogger(UserController.class);
 
 	@RequestMapping(path = "/registeration", method = RequestMethod.POST)
-	public ResponseEntity<UserResponse> userRegisteration(@RequestBody UserEntityDTO userDto) {
+	public ResponseEntity<UserResponse> userRegisteration(@RequestBody UserDto userDto) {
 		service.registerUser(userDto);
 		return new ResponseEntity<UserResponse>(
 				new UserResponse("Registeration success activation link has be sent to registered email", 1),
@@ -33,7 +34,7 @@ public class UserController {
 	}
 
 	@RequestMapping(path = "/activate/account", method = RequestMethod.GET)
-	public ResponseEntity<UserResponse> activateAccount(HttpServletRequest request) {
+	public ResponseEntity<UserResponse> activateAccount(@RequestHeader HttpServletRequest request) {
 		String token = request.getHeader("authorization");
 		service.activateUser(token);
 		return new ResponseEntity<UserResponse>(new UserResponse("Account activate success", 2), HttpStatus.OK);
@@ -41,7 +42,7 @@ public class UserController {
 	}
 
 	@RequestMapping(path = "/login", method = RequestMethod.POST)
-	public ResponseEntity<UserResponse> userLogin(@RequestBody UserEntityDTO user) {
+	public ResponseEntity<UserResponse> userLogin(@RequestBody UserDto user) {
 		String tokenData = service.loginUser(user);
 		return new ResponseEntity<UserResponse>(new UserResponse(tokenData, 3), HttpStatus.OK);
 	}
@@ -56,7 +57,7 @@ public class UserController {
 
 	@RequestMapping(path = "/update/password", method = RequestMethod.PUT)
 
-	public ResponseEntity<UserResponse> updatePassword(@RequestBody UserEntityDTO userDto, HttpServletRequest request) {
+	public ResponseEntity<UserResponse> updatePassword(@RequestBody UserDto userDto,@RequestHeader  HttpServletRequest request) {
 		String token = request.getHeader("authorization");
 		service.updatePassword(token, userDto);
 		return new ResponseEntity<UserResponse>(new UserResponse("Password updated success", 5), HttpStatus.OK);
@@ -64,7 +65,7 @@ public class UserController {
 
 	@RequestMapping(path = "/delete/user", method = RequestMethod.DELETE)
 
-	public ResponseEntity<UserResponse> deleteUser(@RequestBody UserEntityDTO userDto) {
+	public ResponseEntity<UserResponse> deleteUser(@RequestBody UserDto userDto) {
 		service.deleteUser(userDto);
 		return new ResponseEntity<UserResponse>(new UserResponse("User deleted= success", 6), HttpStatus.OK);
 	}

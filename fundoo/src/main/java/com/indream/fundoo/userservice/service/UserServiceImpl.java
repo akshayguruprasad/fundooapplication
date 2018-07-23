@@ -10,8 +10,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.indream.fundoo.configuration.RabbitMqConfig;
 import com.indream.fundoo.exceptionhandler.UserException;
-import com.indream.fundoo.userservice.dto.UserEntityDTO;
 import com.indream.fundoo.userservice.model.MailEntity;
+import com.indream.fundoo.userservice.model.UserDto;
 import com.indream.fundoo.userservice.model.UserEntity;
 import com.indream.fundoo.userservice.repository.UserRepository;
 import com.indream.fundoo.util.TokenManager;
@@ -41,7 +41,7 @@ public class UserServiceImpl implements UserService {
 	AmqpTemplate template;
 
 	@Override
-	public void registerUser(UserEntityDTO user) {
+	public void registerUser(UserDto user) {
 		LOG.info("Enter [UserServiceImpl][registerUser]");
 		LOG.info("Method param user :  " + user);
 
@@ -68,10 +68,6 @@ public class UserServiceImpl implements UserService {
 
 			String mailString = Utility.covertToJSONString(mail);
 			template.convertAndSend(RabbitMqConfig.TOPICEXCHANGENAME, RabbitMqConfig.ROUTING_KEY, mailString);
-			System.out.println("send success");
-
-//need to send mail
-
 		} catch (UserException e) {
 			throw e;
 		} catch (RuntimeException e) {
@@ -106,7 +102,7 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
-	public String loginUser(UserEntityDTO user) {
+	public String loginUser(UserDto user) {
 		LOG.info("Enter [UserServiceImpl][loginUser]");
 		LOG.info("Method param " + user);
 		UserEntity userEntity = null;
@@ -168,7 +164,7 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
-	public void updatePassword(String token, UserEntityDTO userDto) {
+	public void updatePassword(String token, UserDto userDto) {
 		try {
 			if (!userDto.getPassword().equals(userDto.getConfirmPassword())) {
 				throw new UserException(env.getProperty("user.password.mismatch.error.message"));
@@ -187,16 +183,13 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
-	public void deleteUser(UserEntityDTO userDto) {
+	public void deleteUser(UserDto userDto) {
 
 		try {
-
 			String token = this.loginUser(userDto);
 			Claims claims = manager.validateToken(token);
 			String id = claims.get("id").toString();
-
 			repository.delete(id);
-
 		} catch (UserException e) {
 			throw e;
 		} catch (RuntimeException e) {

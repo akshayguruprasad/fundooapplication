@@ -9,7 +9,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.fasterxml.jackson.core.JsonGenerator.Feature;
 import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.indream.fundoo.noteservice.service.NoteService;
 import com.indream.fundoo.noteservice.service.NoteServiceImpl;
@@ -61,7 +60,6 @@ public class AppConfiguration {
 
 	@Bean(name = "mapper")
 	public ModelMapper getModelMapper() {
-
 		return new ModelMapper();
 
 	}

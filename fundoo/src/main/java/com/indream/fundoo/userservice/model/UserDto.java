@@ -1,8 +1,8 @@
-package com.indream.fundoo.userservice.dto;
+package com.indream.fundoo.userservice.model;
 
 import java.io.Serializable;
 
-public final  class UserEntityDTO implements Serializable {
+public final class UserDto implements Serializable {
 
 	/**
 	 * 
@@ -11,7 +11,16 @@ public final  class UserEntityDTO implements Serializable {
 
 	private String id;
 	private String email;
-	private String userName;
+	private String name;
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
 	private String mobile;
 	private String password;
 	private String confirmPassword;
@@ -48,14 +57,6 @@ public final  class UserEntityDTO implements Serializable {
 
 	public void setEmail(String email) {
 		this.email = email;
-	}
-
-	public String getUserName() {
-		return userName;
-	}
-
-	public void setUserName(String userName) {
-		this.userName = userName;
 	}
 
 	public String getMobile() {

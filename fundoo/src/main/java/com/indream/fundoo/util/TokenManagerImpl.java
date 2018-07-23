@@ -38,10 +38,9 @@ public class TokenManagerImpl implements TokenManager {
 		calendar.setTime(date);
 		calendar.add(Calendar.MINUTE, 10);
 		claims = new HashMap<String, Object>();
-		claims.put("name", requester.getUserName());
+		claims.put("name", requester.getName());
 		claims.put("id", String.valueOf(requester.getId()));
 		JwtBuilder jwtbuilder = Jwts.builder().setClaims(claims);
-//		jwtbuilder.setExpiration(calendar.getTime());
 		jwtbuilder.setIssuedAt(date);
 		jwtbuilder.setIssuer(requester.getEmail());
 		jwtbuilder.signWith(SignatureAlgorithm.HS256, env.getProperty("secretkey"));
@@ -59,16 +58,8 @@ public class TokenManagerImpl implements TokenManager {
 		try {
 			Jws<Claims> jwtClaims = Jwts.parser().setSigningKey(env.getProperty("secretkey")).parseClaimsJws(token);
 			Claims claims = jwtClaims.getBody();
-
-			Date expirationDate = claims.getExpiration();
-
-		/*	if (expirationDate.compareTo(new Date()) < 1) {
-				throw new TokenException("Token has expired");
-			}*/
-			System.out.println("returning success");
 			return claims;
 		} catch (TokenException e) {
-			System.out.println("hello exception");
 			e.printStackTrace();
 			throw e;
 		}

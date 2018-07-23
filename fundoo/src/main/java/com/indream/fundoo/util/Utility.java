@@ -13,7 +13,6 @@ import java.util.StringTokenizer;
 
 import org.apache.log4j.Logger;
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -22,15 +21,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.indream.fundoo.exceptionhandler.NoteException;
 import com.indream.fundoo.noteservice.model.NoteEntity;
 import com.indream.fundoo.noteservice.repository.NoteRepository;
-import com.indream.fundoo.userservice.model.MailEntity;
 import com.indream.fundoo.userservice.model.UserEntity;
 
 public class Utility {
 	final static Logger LOG = Logger.getLogger(Utility.class);
 	static final ObjectMapper jacksonMapper = new ObjectMapper();
-
-	@Autowired
-	static ModelMapper mapper;
+	static final ModelMapper mapper = new ModelMapper();
 
 	public static UserEntity getUserEntityFromTokens(Map<String, String> userData) {
 		LOG.info("Enter [Utility][getUserEntityFromTokens]");
@@ -38,7 +34,7 @@ public class Utility {
 		String name = userData.get("name");
 		String email = userData.get("email");
 		userEntity = new UserEntity();
-		userEntity.setUserName(name);
+		userEntity.setName(name);
 		userEntity.setEmail(email);
 		userEntity.setActive(true);
 
@@ -112,10 +108,8 @@ public class Utility {
 
 	}
 
-	public static <S, D> D convert(S source, D destination) {
-		mapper.map(source, destination);
-		System.out.println(destination + " copied value");
-		return destination;
+	public static <S, D> D convert(S source, Class<D> destination) {
+		return mapper.map(source, destination);
 	}
 
 	public static NoteEntity getNoteEntity(List<NoteEntity> noteEntities, String noteId) {
@@ -142,9 +136,8 @@ public class Utility {
 
 	public static <T> T convertFromJSONString(String message, Class<T> class1) {
 
-		
 		try {
-		return 	jacksonMapper.readValue(message, class1);
+			return jacksonMapper.readValue(message, class1);
 		} catch (JsonParseException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -154,7 +147,7 @@ public class Utility {
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}		
+		}
 		return null;
 	}
 

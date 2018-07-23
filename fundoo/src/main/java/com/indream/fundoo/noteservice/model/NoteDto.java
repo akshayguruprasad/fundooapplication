@@ -5,45 +5,32 @@ import java.util.Date;
 import java.util.List;
 
 import org.bson.types.ObjectId;
-import org.springframework.data.mongodb.core.mapping.Document;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-
-import io.swagger.annotations.ApiModelProperty;
-
-@Document(collection = "notes")
-@JsonIgnoreProperties(ignoreUnknown = true, value = { "creadtedOn", "lastModified" })
-public class NoteEntity implements Serializable {
+public final class NoteDto implements Serializable {
+	/**
+	 * 
+	 */
 	private static final long serialVersionUID = 1L;
-
 	private ObjectId id;
-
 	private String title;
 	private String contents;
-	@ApiModelProperty(hidden = true)
 	private Date creadtedOn;
-	@ApiModelProperty(hidden = true)
 	private Date lastModified;
-	@ApiModelProperty(hidden = true)
 	private String userId;
 	private List<String> collaborators;
-	private String label;
-
-	public String getLabel() {
-		return label;
+	@Override
+	public String toString() {
+		return "NoteDto [id=" + id + ", title=" + title + ", contents=" + contents + ", creadtedOn=" + creadtedOn
+				+ ", lastModified=" + lastModified + ", userId=" + userId + ", collaborators=" + collaborators
+				+ ", label=" + label + ", completed=" + completed + ", archived=" + archived + ", pinned=" + pinned
+				+ ", trashed=" + trashed + "]";
 	}
 
-	public void setLabel(String label) {
-		this.label = label;
-	}
-
+	private LabelEntity label;
 	private boolean completed;
 	private boolean archived;
 	private boolean pinned;
 	private boolean trashed;
-
-	public NoteEntity() {
-	}
 
 	public boolean isCompleted() {
 		return completed;
@@ -75,6 +62,22 @@ public class NoteEntity implements Serializable {
 
 	public void setTrashed(boolean trashed) {
 		this.trashed = trashed;
+	}
+
+	public List<String> getCollaborators() {
+		return collaborators;
+	}
+
+	public void setCollaborators(List<String> collaborators) {
+		this.collaborators = collaborators;
+	}
+
+	public LabelEntity getLabel() {
+		return label;
+	}
+
+	public void setLabel(LabelEntity label) {
+		this.label = label;
 	}
 
 	public ObjectId getId() {
@@ -123,14 +126,6 @@ public class NoteEntity implements Serializable {
 
 	public void setUserId(String userId) {
 		this.userId = userId;
-	}
-
-	public List<String> getCollaborators() {
-		return collaborators;
-	}
-
-	public void setCollaborators(List<String> collaborators) {
-		this.collaborators = collaborators;
 	}
 
 }
