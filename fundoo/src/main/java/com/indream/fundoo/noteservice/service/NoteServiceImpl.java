@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.redis.core.RedisTemplate;
 
 import com.indream.fundoo.exceptionhandler.NoteException;
 import com.indream.fundoo.exceptionhandler.UserException;
@@ -19,7 +20,7 @@ import com.indream.fundoo.util.Utility;
 import io.jsonwebtoken.Claims;
 
 public class NoteServiceImpl implements NoteService {
-	
+
 	@Autowired
 	TokenManager manager;
 	@Autowired
@@ -27,10 +28,14 @@ public class NoteServiceImpl implements NoteService {
 	@Autowired
 	@Qualifier(value = "repository")
 	private UserRepository userRepository;
+	@Autowired
+	RedisTemplate<String, Object> redisTemplate;
 
 	@Override
 	public void createNote(NoteDto noteEntityDTO, String token) {
 		try {
+			
+//			redisTemplate.
 			NoteEntity noteEntity = Utility.convert(noteEntityDTO, NoteEntity.class);
 			noteEntity.setCreadtedOn(new Date());
 			noteEntity.setLastModified(new Date());
