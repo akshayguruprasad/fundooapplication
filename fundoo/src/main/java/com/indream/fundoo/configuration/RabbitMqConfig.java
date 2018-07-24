@@ -15,6 +15,10 @@ import org.springframework.context.annotation.Configuration;
 
 import com.indream.fundoo.util.MailListener;
 
+/** RABBITMQ CONFIGURATION
+ * @author Akshay
+ *
+ */
 @Configuration
 public class RabbitMqConfig {
 	public static final String TOPICEXCHANGENAME = "DirectMessageExchange";
@@ -23,21 +27,53 @@ public class RabbitMqConfig {
 	public static final String ROUTING_KEY = "EmailKey";
 	static final String LISTENERMETHOD = "sendEmail";
 
+	/* @purpose
+	 * BEAN FOR THE QUEUE
+	 *
+	 * @author akshay
+	 * @com.indream.fundoo.configuration
+	 * @since Jul 24, 2018
+	 *
+	 */
 	@Bean
 	Queue queue() {
 		return new Queue(QUEUENAME, false);
 	}
 
+	/* @purpose
+	 * BEAN FOR THE EXCHANGE
+	 *
+	 * @author akshay
+	 * @com.indream.fundoo.configuration
+	 * @since Jul 24, 2018
+	 *
+	 */
 	@Bean
 	TopicExchange exchange() {
 		return new TopicExchange(TOPICEXCHANGENAME);
 	}
 
+	/* @purpose
+	 * BINDING OBJECT BEAN
+	 *
+	 * @author akshay
+	 * @com.indream.fundoo.configuration
+	 * @since Jul 24, 2018
+	 *
+	 */
 	@Bean
 	Binding binding(Queue queue, TopicExchange exchange) {
 		return BindingBuilder.bind(queue).to(exchange).with(ROUTING_KEY);
 	}
 
+	/* @purpose
+	 * SIMPLELISTENER FOR CREATION AND MAINTAINANCE OF THE LISTENER THREADS
+	 *
+	 * @author akshay
+	 * @com.indream.fundoo.configuration
+	 * @since Jul 24, 2018
+	 *
+	 */
 	@Bean
 	SimpleMessageListenerContainer container(ConnectionFactory connectionFactory, MailListener receiver) {
 		SimpleMessageListenerContainer container = new SimpleMessageListenerContainer();
@@ -47,6 +83,14 @@ public class RabbitMqConfig {
 		return container;
 	}
 
+	/* @purpose
+	 * RABBITMQ TEMPLATE TO AVOID CONFIGURATIONS
+	 *
+	 * @author akshay
+	 * @com.indream.fundoo.configuration
+	 * @since Jul 24, 2018
+	 *
+	 */
 	@Bean(name = "template")
 	public AmqpTemplate rabbitTemplate(ConnectionFactory connectionFactory) {
 		final RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);

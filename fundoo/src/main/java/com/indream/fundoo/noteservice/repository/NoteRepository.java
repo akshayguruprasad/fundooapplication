@@ -7,9 +7,13 @@ import org.springframework.stereotype.Repository;
 
 import com.indream.fundoo.noteservice.model.NoteEntity;
 
+/** CUSTOM NOTE REPOSITORY
+ * @author Akshay
+ *
+ */
 @Repository("noteRepository")
 public interface NoteRepository extends MongoRepository<NoteEntity, String> {
 
-	List<NoteEntity> getByUserId(String userId);
-	List<NoteEntity> getById(String id);
+	List<NoteEntity> getByUserId(String userId);//GET VALUE BY USER ID
+	List<NoteEntity> getById(String id);//GET VALUE BY NOTE ID
 }
