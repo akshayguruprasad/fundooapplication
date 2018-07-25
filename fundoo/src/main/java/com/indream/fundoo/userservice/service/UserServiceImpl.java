@@ -27,19 +27,19 @@ public class UserServiceImpl implements UserService {
     final Logger LOG = Logger.getLogger(UserServiceImpl.class);
 
     @Autowired
-    private TokenManager manager;
+    private TokenManager manager;// TOKEN MANAGER IMPLEMENTATION
 
     @Autowired
-    private PasswordEncoder passwordEncoder;
+    private PasswordEncoder passwordEncoder;// PASSWORD ENCODER BLOWFISH BLOCK CIPHER
 
     @Autowired
-    private Environment env;
+    private Environment env;// ENVIRMONENT FOR PROPERTIES TO BE READ
 
     @Autowired
-    private UserRepository repository;
+    private UserRepository repository;// USER MONGO REPOSITORY
 
     @Autowired
-    AmqpTemplate template;
+    AmqpTemplate template;// AMQP TEMPLATE
 
     /*
      * @purpose REGISTER THE USER INTO THE SYSTEM

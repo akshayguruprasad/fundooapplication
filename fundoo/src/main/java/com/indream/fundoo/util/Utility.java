@@ -6,9 +6,7 @@ import java.util.List;
 import org.apache.log4j.Logger;
 import org.modelmapper.ModelMapper;
 
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.indream.fundoo.noteservice.model.NoteEntity;
 
@@ -38,8 +36,7 @@ public class Utility {
     }
 
     /*
-     * @purpose
-     * FIND THE NOTE BY ID
+     * @purpose FIND THE NOTE BY ID
      *
      * @author akshay
      * 
@@ -49,7 +46,7 @@ public class Utility {
      *
      */
     public static NoteEntity getNoteEntity(List<NoteEntity> noteEntities, String noteId) {
-	return noteEntities.stream().filter(p -> p.getId().toString().equals(noteId)).findFirst().get();
+	return noteEntities.stream().filter(p -> p.get_id().toString().equals(noteId)).findFirst().get();
 
     }
 
@@ -86,17 +83,9 @@ public class Utility {
 
 	try {
 	    return jacksonMapper.readValue(message, class1);
-	} catch (JsonParseException e) {
-	    // TODO Auto-generated catch block
-	    e.printStackTrace();
-	} catch (JsonMappingException e) {
-	    // TODO Auto-generated catch block
-	    e.printStackTrace();
 	} catch (IOException e) {
-	    // TODO Auto-generated catch block
-	    e.printStackTrace();
+	    throw new RuntimeException("Failed to parse json string");
 	}
-	return null;
     }
 
 }

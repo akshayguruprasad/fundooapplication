@@ -60,9 +60,7 @@ public class TokenValidatorInterceptor extends HandlerInterceptorAdapter {
 	    String token = request.getHeader("authorization");// TAKE TOKEN VALUE FROM THE HEADER
 	    HttpSession httpSession = request.getSession();// CREATION OF SESSION
 	    Token valueToken = null;// TOKEN CLASS REF
-	    if (redisTemplate.hasKey(token)) {// CHECK FOR THE VALUE PRESENT IN THE REDIS [TRUE]
-		valueToken = redisTemplate.boundValueOps(token).get();// GET THE TOKEN OBJECT OF TYPE TOKEN
-	    } else {// NEW ENTRY FOUND
+	    if (!redisTemplate.hasKey(token)) {// NEW ENTRY FOUND
 		Claims claims = manager.validateToken(token);// PARSE THE TOKEN
 		valueToken = new Token();// CREATE TOKEN OBJ
 		//SETTING ALL THE REQUIRED VALUES
@@ -71,8 +69,9 @@ public class TokenValidatorInterceptor extends HandlerInterceptorAdapter {
 		valueToken.setIssuedAt(claims.getIssuedAt());
 		valueToken.setIssuer(claims.getIssuer());
 		//STORE K V IN REDIS
-		redisTemplate.boundValueOps(token).set(valueToken, 10, TimeUnit.MINUTES);
+		redisTemplate.boundValueOps(token).set(valueToken, 100, TimeUnit.MINUTES);
 	    }
+	    valueToken = redisTemplate.boundValueOps(token).get();// GET THE TOKEN OBJECT OF TYPE TOKEN
 	    httpSession.setAttribute("token", valueToken);//ON SESSION OBJECT SET TOKEN
 	    System.out.println("The value of the token that is gen " + valueToken);
 	    status = true;//STATUS IS TRUE FOR CONTINUE

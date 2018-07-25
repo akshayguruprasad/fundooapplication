@@ -50,4 +50,5 @@ public class Token implements Serializable {
 		return "Token [name=" + name + ", id=" + id + ", issuedAt=" + issuedAt + ", issuer=" + issuer + "]";
 	}
 
+	
 }

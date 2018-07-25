@@ -1,131 +1,170 @@
 package com.indream.fundoo.noteservice.model;
 
 import java.io.Serializable;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
-import org.bson.types.ObjectId;
+import io.swagger.annotations.ApiModelProperty;
 
 public final class NoteDto implements Serializable {
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
-	private ObjectId id;
-	private String title;
-	private String contents;
-	private Date creadtedOn;
-	private Date lastModified;
-	private String userId;
-	private List<String> collaborators;
-	@Override
-	public String toString() {
-		return "NoteDto [id=" + id + ", title=" + title + ", contents=" + contents + ", creadtedOn=" + creadtedOn
-				+ ", lastModified=" + lastModified + ", userId=" + userId + ", collaborators=" + collaborators
-				+ ", label=" + label + ", completed=" + completed + ", archived=" + archived + ", pinned=" + pinned
-				+ ", trashed=" + trashed + "]";
-	}
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
 
-	private LabelEntity label;
-	private boolean completed;
-	private boolean archived;
-	private boolean pinned;
-	private boolean trashed;
+    private String _id;
+    private String title;
+    private String contents;
+    @ApiModelProperty(hidden = true)
+    private Date creadtedOn;
+    @ApiModelProperty(hidden = true)
+    private Date lastModified;
+    @ApiModelProperty(hidden = true)
+    private String userId;
+    @ApiModelProperty(hidden = true)
 
-	public boolean isCompleted() {
-		return completed;
-	}
+    private List<String> collaborators;
 
-	public void setCompleted(boolean completed) {
-		this.completed = completed;
-	}
+    private List<LabelEntity> label;
+    @ApiModelProperty(hidden = true)
 
-	public boolean isArchived() {
-		return archived;
-	}
+    private boolean completed;
+    private boolean archived;
+    private boolean pinned;
+    private boolean trashed;
+    @ApiModelProperty(hidden = true)
+    private Date reminderDate;
 
-	public void setArchived(boolean archived) {
-		this.archived = archived;
-	}
+    private String reminder;
 
-	public boolean isPinned() {
-		return pinned;
-	}
+    public String getReminder() {
+	return reminder;
+    }
 
-	public void setPinned(boolean pinned) {
-		this.pinned = pinned;
-	}
+    public void setReminder(String reminder) {
+	this.reminder = reminder;
+    }
 
-	public boolean isTrashed() {
-		return trashed;
-	}
+    public Date getReminderDate() {
 
-	public void setTrashed(boolean trashed) {
-		this.trashed = trashed;
+	try {
+	    this.reminderDate = sdf.parse(this.reminder);
+	} catch (ParseException e) {
+	    e.printStackTrace();
 	}
+	return reminderDate;
+    }
 
-	public List<String> getCollaborators() {
-		return collaborators;
-	}
+    public void setReminderDate(Date reminderDate) {
+	this.reminderDate = reminderDate;
+    }
 
-	public void setCollaborators(List<String> collaborators) {
-		this.collaborators = collaborators;
-	}
+    private static SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy hh:mm:ss");
 
-	public LabelEntity getLabel() {
-		return label;
-	}
+    public boolean isCompleted() {
+	return completed;
+    }
 
-	public void setLabel(LabelEntity label) {
-		this.label = label;
-	}
+    public void setCompleted(boolean completed) {
+	this.completed = completed;
+    }
 
-	public ObjectId getId() {
-		return id;
-	}
+    public boolean isArchived() {
+	return archived;
+    }
 
-	public void setId(ObjectId id) {
-		this.id = id;
-	}
+    public void setArchived(boolean archived) {
+	this.archived = archived;
+    }
 
-	public String getTitle() {
-		return title;
-	}
+    public boolean isPinned() {
+	return pinned;
+    }
 
-	public void setTitle(String title) {
-		this.title = title;
-	}
+    public void setPinned(boolean pinned) {
+	this.pinned = pinned;
+    }
 
-	public String getContents() {
-		return contents;
-	}
+    public boolean isTrashed() {
+	return trashed;
+    }
 
-	public void setContents(String contents) {
-		this.contents = contents;
-	}
+    public void setTrashed(boolean trashed) {
+	this.trashed = trashed;
+    }
 
-	public Date getCreadtedOn() {
-		return creadtedOn;
-	}
+    public List<String> getCollaborators() {
+	return collaborators;
+    }
 
-	public void setCreadtedOn(Date creadtedOn) {
-		this.creadtedOn = creadtedOn;
-	}
+    public void setCollaborators(List<String> collaborators) {
+	this.collaborators = collaborators;
+    }
 
-	public Date getLastModified() {
-		return lastModified;
-	}
+    public List<LabelEntity> getLabel() {
+	return label;
+    }
 
-	public void setLastModified(Date lastModified) {
-		this.lastModified = lastModified;
-	}
+    public void setLabel(List<LabelEntity> label) {
+	this.label = label;
+    }
 
-	public String getUserId() {
-		return userId;
-	}
+    public String get_id() {
+	return _id;
+    }
 
-	public void setUserId(String userId) {
-		this.userId = userId;
-	}
+    public void set_id(String _id) {
+	this._id = _id;
+    }
+
+    public String getTitle() {
+	return title;
+    }
+
+    public void setTitle(String title) {
+	this.title = title;
+    }
+
+    public String getContents() {
+	return contents;
+    }
+
+    public void setContents(String contents) {
+	this.contents = contents;
+    }
+
+    public Date getCreadtedOn() {
+	return creadtedOn;
+    }
+
+    public void setCreadtedOn(Date creadtedOn) {
+	this.creadtedOn = creadtedOn;
+    }
+
+    public Date getLastModified() {
+	return lastModified;
+    }
+
+    public void setLastModified(Date lastModified) {
+	this.lastModified = lastModified;
+    }
+
+    public String getUserId() {
+	return userId;
+    }
+
+    public void setUserId(String userId) {
+	this.userId = userId;
+    }
+
+    @Override
+    public String toString() {
+	return "NoteDto [_id=" + _id + ", title=" + title + ", contents=" + contents + ", creadtedOn=" + creadtedOn
+		+ ", lastModified=" + lastModified + ", userId=" + userId + ", collaborators=" + collaborators
+		+ ", label=" + label + ", completed=" + completed + ", archived=" + archived + ", pinned=" + pinned
+		+ ", trashed=" + trashed + ", reminderDate=" + reminderDate + ", reminder=" + reminder + "]";
+    }
 
 }
