@@ -5,28 +5,27 @@ import java.io.Serializable;
 import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-@Document(collection = "user_details")
+@Document(collection = "users")
 public class UserEntity implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 
-
 	private ObjectId id;
 	private String email;
-	private String userName;
 	private String mobile;
 	private String password;
 	private boolean isActive;
+	private String name;
 
-	public UserEntity() {}
+	public String getName() {
+		return name;
+	}
 
-	public UserEntity(String email, String userName, String mobile, String password, boolean isActive) {
-		super();
-		this.email = email;
-		this.userName = userName;
-		this.mobile = mobile;
-		this.password = password;
-		this.isActive = isActive;
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public UserEntity() {
 	}
 
 	public void setId(ObjectId id) {
@@ -43,14 +42,6 @@ public class UserEntity implements Serializable {
 
 	public void setEmail(String email) {
 		this.email = email;
-	}
-
-	public String getUserName() {
-		return userName;
-	}
-
-	public void setUserName(String userName) {
-		this.userName = userName;
 	}
 
 	public String getMobile() {

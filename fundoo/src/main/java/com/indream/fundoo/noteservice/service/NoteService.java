@@ -2,17 +2,44 @@ package com.indream.fundoo.noteservice.service;
 
 import java.util.List;
 
-import com.indream.fundoo.noteservice.model.Note;
-import com.indream.fundoo.noteservice.model.NoteEntityDTO;
 
+import com.indream.fundoo.noteservice.model.NoteEntity;
+import com.indream.fundoo.noteservice.model.Token;
+import com.indream.fundoo.noteservice.model.NoteDto;
+
+/**
+ * NOTESERVICE INTERFACE
+ * 
+ * @author Akshay
+ *
+ */
 public interface NoteService {
+    void createNote(NoteDto note, Token token);
 
-	void createNote(NoteEntityDTO note, String token);
+    void updateNote(NoteDto noteDto, Token token);
 
-	void updateNote(String noteId, String content, String token);
+    void deleteNote(String noteId, Token token);
 
-	void deleteNote(String noteId, String token);
+    List<NoteEntity> selectNote(Token token);
 
-	List<Note> selectNote(String token);
+    void archiveNote(String noteId, Token token);
 
+    void pinNote(String noteId, Token token);
+
+    void deleteNoteToTrash(String noteId, Token token);
+
+    void restoreNote(String noteId, Token token);
+
+    void reminderNote(NoteDto noteDto, Token token);
+
+    void createLabel(String label, Token token);
+
+    void deleteLabel(String labelId, Token token);
+
+    void editLabelName(Token token, String label, String labelId);
+
+    void setLabelNote(String noteId, Token token, String label);
+    
+	List<NoteEntity> getPinnedNotes(Token token);
+    
 }

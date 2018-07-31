@@ -2,186 +2,273 @@ package com.indream.fundoo.userservice.service;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.log4j.Logger;
-import org.modelmapper.ModelMapper;
+import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import com.indream.fundoo.configuration.RabbitMqConfig;
 import com.indream.fundoo.exceptionhandler.UserException;
-import com.indream.fundoo.userservice.dto.UserEntityDTO;
+import com.indream.fundoo.noteservice.model.Token;
+import com.indream.fundoo.userservice.model.MailEntity;
+import com.indream.fundoo.userservice.model.UserDto;
 import com.indream.fundoo.userservice.model.UserEntity;
 import com.indream.fundoo.userservice.repository.UserRepository;
-import com.indream.fundoo.util.MessageService;
 import com.indream.fundoo.util.TokenManager;
+import com.indream.fundoo.util.Utility;
 
-import io.jsonwebtoken.Claims;
-
+/**
+ * USER SERVICE IMPL MEHTOD FOR THE USER BUSINESS OPERATIONS
+ * 
+ * @author Akshay
+ *
+ */
 public class UserServiceImpl implements UserService {
-	final Logger LOG = Logger.getLogger(UserServiceImpl.class);
+    final Logger LOG = Logger.getLogger(UserServiceImpl.class);
 
-	@Autowired
-	private Environment env;
+    @Autowired
+    private TokenManager manager;// TOKEN MANAGER IMPLEMENTATION
 
-	@Autowired
-	private MessageService springMessage;
+    @Autowired
+    private PasswordEncoder passwordEncoder;// PASSWORD ENCODER BLOWFISH BLOCK CIPHER
 
-	@Autowired
-	private TokenManager manager;
+    @Autowired
+    private Environment env;// ENVIRMONENT FOR PROPERTIES TO BE READ
 
-	@Autowired
-	private PasswordEncoder passwordEncoder;
+    @Autowired
+    private UserRepository repository;// USER MONGO REPOSITORY
 
-	@Autowired
-	private UserRepository repository;
+    @Autowired
+    AmqpTemplate template;// AMQP TEMPLATE
 
-	@Autowired
-	private ModelMapper mapper;
+    /*
+     * @purpose REGISTER THE USER INTO THE SYSTEM
+     *
+     * @author akshay
+     * 
+     * @com.indream.fundoo.userservice.service
+     * 
+     * @since Jul 24, 2018
+     *
+     */
+    @Override
+    public void registerUser(UserDto user) {
+	LOG.info("Enter [UserServiceImpl][registerUser]");
+	UserEntity userEntity = null;
+	try {
+	    userEntity = repository.getByEmail(user.getEmail());
+	    if (userEntity != null) {
+		// THROW EXCEPTION AS REGISTERATION ALREADY EXISTS
+		throw new UserException(env.getProperty("user.already.exists.error.message"));
+	    }
+	    user.setPassword(passwordEncoder.encode(user.getPassword()));
+	    user.setActive(false);// SAVE THE USER IN THE BASE
+	    userEntity = Utility.convert(user, UserEntity.class);
+	    userEntity = repository.save(userEntity);
+	    String token = manager.generateToken(userEntity); // GENERATE AND BIND THE TOKEN TO URL
+	    String message = env.getProperty("user.activation.link.prefix") + token
+		    + env.getProperty("user.activation.link.suffix");
+	    MailEntity mail = new MailEntity();
+	    mail.setSubject(env.getProperty("user.activation.email.subject"));
+	    mail.setMessage(message);
+	    mail.setTo(user.getEmail());
+	    String mailString = Utility.covertToJSONString(mail);
+	    template.convertAndSend(RabbitMqConfig.TOPICEXCHANGENAME, RabbitMqConfig.ROUTING_KEY, mailString);
+	} catch (UserException e) {
+	    LOG.error("Exception occured [UserServiceImpl][registerUser] " + e.getMessage());
+	    throw e;
+	} catch (RuntimeException e) {
+	    LOG.error("Exception occured [UserServiceImpl][registerUser] " + e.getMessage());
+	    throw e;
+	} catch (Exception e) {
+	    LOG.error("Exception occured [UserServiceImpl][registerUser] " + e.getMessage());
+	}
+	LOG.info("Exit [UserServiceImpl][registerUser]");
+    }
 
-	@Override
-	public void registerUser(UserEntityDTO user) {
-		LOG.info("Enter [UserServiceImpl][registerUser]");
-		LOG.info("Method param user :  " + user);
+    /*
+     * @purpose ACTIVATE THE USER BASED ON THE VALID TOKEN THAT IS PASSED
+     *
+     * @author akshay
+     * 
+     * @com.indream.fundoo.userservice.service
+     * 
+     * @since Jul 24, 2018
+     *
+     */
+    @Override
+    public void activateUser(Token token) {
+	LOG.info("Enter [UserServiceImpl][activateUser]");
+	try {
+	    String id = token.getId();// GET USER ID
+	    UserEntity user = repository.findOne(id);// GET THE USER VALUE
+	    user.setActive(true);// UPDATE THE USER VALUE TO TRUE
+	    repository.save(user);// SAVE THE USER VALUE
+	} catch (RuntimeException e) {
+	    LOG.error("Exception occured [UserServiceImpl][activateUser] " + e.getMessage());
+	    throw e;
+	} catch (Exception e) {
+	    LOG.error("Exception occured [UserServiceImpl][activateUser] " + e.getMessage());
+	}
+	LOG.info("Exit [UserServiceImpl][activateUser]");
 
-		UserEntity userEntity = null;
-		try {
-			userEntity = repository.getByEmail(user.getEmail());
-			if (userEntity != null) {
-				// THROW EXCEPTION AS REGISTERATION ALREADY EXISTS
-				throw new UserException(env.getProperty("user.already.exists.error.message"));
-			}
-			user.setPassword(passwordEncoder.encode(user.getPassword()));
-			user.setActive(false);// SAVE THE USER IN THE BASE
-			userEntity = mapper.map(user, UserEntity.class);
-			userEntity = repository.save(userEntity);
-			String token = manager.generateToken(userEntity); // GENERATE AND BIND THE TOKEN TO URL
-			String message = env.getProperty("user.activation.link.prefix") + token
-					+ env.getProperty("user.activation.link.suffix");
-			springMessage.sendMessage(user.getEmail(), env.getProperty("user.activation.email.subject"), message);
-		} catch (UserException e) {
-			throw e;
-		} catch (RuntimeException e) {
-			throw e;
-		} catch (Exception e) {
-			LOG.error("Exception occured [UserServiceImpl][registerUser] " + e.getMessage());
-			e.printStackTrace();
-		}
-		LOG.info("Exit [UserServiceImpl][registerUser]");
+    }
+
+    /*
+     * @purpose LOGINUSER METHOD WILL GENERATE A TOKEN FOR THE USER AND SEND AS
+     * RESPONSE
+     *
+     * @author akshay
+     * 
+     * @com.indream.fundoo.userservice.service
+     * 
+     * @since Jul 24, 2018
+     *
+     */
+    @Override
+    public String loginUser(UserDto user) {
+	LOG.info("Enter [UserServiceImpl][loginUser]");
+	UserEntity userEntity = null;
+	String token = null;
+	try {
+	    userEntity = repository.getByEmail(user.getEmail());// GET USER BY EMAIL ID
+	    if (userEntity == null) {// IF NOT EXISTING THROW EXC
+		throw new UserException(env.getProperty("user.find.error.message"));
+	    }
+	    if (!userEntity.isActive()) {// IF NOT ACTIVATED THE PROMPT THE USER TO ACTIVATE THE ACCOUNT
+		throw new UserException(env.getProperty("user.activation.false"));
+	    }
+	    if (!passwordEncoder.matches(user.getPassword(), userEntity.getPassword())) {// CHECK FOR USERPASSWORD AND
+											 // REGISTERED USER PASSWORD
+		throw new UserException(env.getProperty("user.password.mismatch.error.message"));
+	    }
+	    token = manager.generateToken(userEntity);// IF VALID LOGIN THEN PROVIDE THE USER WITH APPROPRIATE TOKEN
+	} catch (UserException e) {
+	    throw e;
+	} catch (RuntimeException e) {
+	    throw e;
+	} catch (Exception e) {
+	    LOG.error("Exception occured [UserServiceImpl][loginUser] " + e.getMessage());
 	}
 
-	@Override
-	public void activateUser(String token) {
-		LOG.info("Enter [UserServiceImpl][activateUser]");
-		LOG.info("Method param token : " + token);
-		Claims claims = null;
-		try {
-			claims = manager.validateToken(token);
-			String id = claims.get("id").toString();
-			UserEntity user = repository.findOne(id);
-			user.setActive(true);
-			repository.save(user);
-		} catch (RuntimeException e) {
-			throw e;
-		} catch (Exception e) {
-			LOG.error("Exception occured [UserServiceImpl][activateUser] " + e.getMessage());
-		}
-		LOG.info("Exit [UserServiceImpl][activateUser]");
+	return token;
+    }
+
+    /*
+     * @purpose RESET THE USER PASSWORD
+     *
+     * @author akshay
+     * 
+     * @com.indream.fundoo.userservice.service
+     * 
+     * @since Jul 24, 2018
+     *
+     */
+    @Override
+    public void resetUserPassword(String emailId) {
+	LOG.info("Enter [UserServiceImpl][resetUserPassword]");
+	UserEntity user = null;
+	String newPassword = null;
+	try {
+	    user = repository.getByEmail(emailId);// GET THE USER ENTITY BY THE EMAIL ID
+	    if (user == null) {
+		throw new UserException(env.getProperty("user.find.error.message"));
+	    }
+	    newPassword = passwordEncoder.encode(RandomStringUtils.randomAlphanumeric(10));// GENERATE AN ALPHANUMBER
+											   // FOR LENGTH 10 FOR THE
+											   // RESET
+	    user.setPassword(newPassword);// SET THE NEW PASSWORD
+	    user = repository.save(user);// UPDATE THE USER
+	    String token = manager.generateToken(user);// GENERATE A TOKEN FOR THE USER
+	    MailEntity mail = new MailEntity();// CREATE A MAIL ENTITY
+	    mail.setSubject(env.getProperty("user.activation.email.subject"));// SET THE APPROPRIATE VALUE FOR THE
+									      // MAILENTITY
+	    mail.setMessage(env.getProperty("user.reset.link.link") + token);
+	    mail.setTo(user.getEmail());
+	    String mailString = Utility.covertToJSONString(mail);// CONVERT IT TO JSON
+	    template.convertAndSend(RabbitMqConfig.TOPICEXCHANGENAME, RabbitMqConfig.ROUTING_KEY, mailString);// PRODUCE
+													      // SENDS
+													      // TO
+													      // ECHANGE
+	} catch (UserException e) {
+	    LOG.error("Exception occured [UserServiceImpl][resetUserPassword] " + e.getMessage());
+	    throw e;
+	} catch (RuntimeException e) {
+	    LOG.error("Exception occured [UserServiceImpl][resetUserPassword] " + e.getMessage());
+	    throw e;
+	} catch (Exception e) {
+	    LOG.error("Exception occured [UserServiceImpl][resetUserPassword] " + e.getMessage());
+	}
+	LOG.info("Exit [UserServiceImpl][resetUserPassword]");
+    }
+
+    /*
+     * @purpose UPDATE THE PASSWORD
+     *
+     * @author akshay
+     * 
+     * @com.indream.fundoo.userservice.service
+     * 
+     * @since Jul 24, 2018
+     *
+     */
+    @Override
+    public void updatePassword(Token token, UserDto userDto) {
+	try {
+	    if (!userDto.getPassword().equals(userDto.getConfirmPassword())) {// COMPARE THE USER PASSWORD AND THE TOEKN
+									      // PASSWORD
+		throw new UserException(env.getProperty("user.password.mismatch.error.message"));
+	    }
+	    if (!userDto.getEmail().equals(token.getIssuer())) {// USER EMAIL AND THE TOKEN EMAIL
+		throw new UserException(env.getProperty("user.email.mismatch.error.message"));
+
+	    }
+	    UserEntity user = repository.getByEmail(userDto.getEmail());// GET THE USER DEATISL BY THE EMAIL
+	    user.setPassword(passwordEncoder.encode(userDto.getConfirmPassword()));// ENCODE THE PASSWORD
+	    repository.save(user);// UPDATE THE PASSWORD
+	} catch (UserException e) {
+	    LOG.error("Exception in [UserServiceImpl][updatePassword] " + e.getMessage());
+	    throw e;
+	} catch (RuntimeException e) {
+	    LOG.error("Exception in [UserServiceImpl][updatePassword] " + e.getMessage());
+	    throw e;
+	} catch (Exception e) {
+	    LOG.error("Exception in [UserServiceImpl][updatePassword] " + e.getMessage());
+	}
+
+    }
+
+    /*
+     * @purpose DELETE THE USER FROM THE SYSTEM
+     *
+     * @author akshay
+     * 
+     * @com.indream.fundoo.userservice.service
+     * 
+     * @since Jul 24, 2018
+     *
+     */
+    @Override
+    public void deleteUser(UserDto userDto, Token token) {
+
+	try {
+	    String id = token.getId();// GET USER ID BY THE TOKEN
+	    UserEntity userValue = repository.findOne(id);// GET THE USER BY THE USER ID
+	    UserEntity user = repository.getByEmail(userValue.getEmail());// GET THE USER BY THE USER EMAIL ENTERED
+	    if (!user.equals(userValue)) {
+		throw new UserException(env.getProperty("user.failed.mismatch.error.message"));
+	    }
+	    repository.delete(id);// A VALID LOGIN AND SO DELETE THE USER
+	} catch (UserException e) {
+	    LOG.error("Exception in [UserServiceImpl][deleteUser] " + e.getMessage());
+	    throw e;
+	} catch (RuntimeException e) {
+	    LOG.error("Exception in [UserServiceImpl][deleteUser] " + e.getMessage());
+	    throw e;
+	} catch (Exception e) {
+	    LOG.error("Exception in [UserServiceImpl][deleteUser] " + e.getMessage());
 
 	}
 
-	@Override
-	public String loginUser(UserEntityDTO user) {
-		LOG.info("Enter [UserServiceImpl][loginUser]");
-		LOG.info("Method param " + user);
-		UserEntity userEntity = null;
-		String token = null;
-		try {
-			userEntity = repository.getByEmail(user.getEmail());
-			if (userEntity == null) {
-				throw new UserException(env.getProperty("user.find.error.message"));
-			}
-			if (!userEntity.isActive()) {
-				throw new UserException(env.getProperty("user.activation.false"));
-			}
-			if (!passwordEncoder.matches(user.getPassword(), userEntity.getPassword())) {
-				throw new UserException(env.getProperty("user.password.mismatch.error.message"));
-			}
-			token = manager.generateToken(userEntity);
-		} catch (UserException e) {
-			throw e;
-		} catch (RuntimeException e) {
-			throw e;
-		} catch (Exception e) {
-			LOG.error("Exception occured [UserServiceImpl][loginUser] " + e.getMessage());
-		}
-
-		return token;
-	}
-
-	@Override
-	public void resetUserPassword(String emailId) {
-		LOG.info("Enter [UserServiceImpl][resetUserPassword]");
-		LOG.info("Method param " + emailId);
-		UserEntity user = null;
-		String newPassword = null;
-		try {
-			user = repository.getByEmail(emailId);
-			if (user == null) {
-				throw new UserException(env.getProperty("user.find.error.message"));
-			}
-			newPassword = passwordEncoder.encode(RandomStringUtils.randomAlphanumeric(10));
-			user.setPassword(newPassword);
-			user = repository.save(user);
-			String token = manager.generateToken(user);
-			springMessage.sendMessage(user.getEmail(), env.getProperty("user.reset.email.subject"),
-					env.getProperty("user.reset.link.link") + token);
-			System.out.println("------------this will print before the thread finishes its execution");
-		} catch (UserException e) {
-			throw e;
-		} catch (RuntimeException e) {
-			throw e;
-		} catch (Exception e) {
-			LOG.error("Exception occured [UserServiceImpl][resetUserPassword] " + e.getMessage());
-		}
-		LOG.info("Exit [UserServiceImpl][resetUserPassword]");
-	}
-
-	@Override
-	public void updatePassword(String token, UserEntityDTO userDto) {
-		try {
-			if (!userDto.getPassword().equals(userDto.getConfirmPassword())) {
-				throw new UserException(env.getProperty("user.password.mismatch.error.message"));
-			}
-			UserEntity user = repository.getByEmail(userDto.getEmail());
-			user.setPassword(passwordEncoder.encode(userDto.getConfirmPassword()));
-			repository.save(user);
-		} catch (UserException e) {
-			throw e;
-		} catch (RuntimeException e) {
-			throw e;
-		} catch (Exception e) {
-			LOG.error("Exception in [UserServiceImpl][updatePassword] " + e.getMessage());
-		}
-
-	}
-
-	@Override
-	public void deleteUser(UserEntityDTO userDto) {
-
-		try {
-
-			String token = this.loginUser(userDto);
-			Claims claims = manager.validateToken(token);
-			String id = claims.get("id").toString();
-
-			repository.delete(id);
-
-		} catch (UserException e) {
-			throw e;
-		} catch (RuntimeException e) {
-			throw e;
-		} catch (Exception e) {
-			System.err.println(e.getMessage());
-		}
-
-	}
+    }
 }
