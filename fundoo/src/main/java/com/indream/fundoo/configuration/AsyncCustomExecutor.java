@@ -11,25 +11,60 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import com.indream.fundoo.exceptionhandler.AynchExceptionHandler;
 
+/**
+ * CONFIGURATION FOR THE ASYNC CONFIGURER
+ * 
+ * @author Akshay
+ *
+ */
 @Configuration
 @EnableAsync
 public class AsyncCustomExecutor implements AsyncConfigurer {
 
-	
-	@Bean(name="threadpoolexec")
-	public Executor getExecutor() {
+    /*
+     * @purpose EXECUTOR BEAN CREATED [THREADPOOLTASKEXECUTOR]
+     *
+     * @author akshay
+     * 
+     * @com.indream.fundoo.configuration
+     * 
+     * @since Jul 24, 2018
+     *
+     */
+    @Bean(name = "threadpoolexec")
+    public Executor getExecutor() {
 
-		return new ThreadPoolTaskExecutor();
-	}
+	return new ThreadPoolTaskExecutor();// NEW OPERATOR
+    }
 
-	@Override
-	public Executor getAsyncExecutor() {
-		return getExecutor();
-	}
+    /*
+     * @purpose OVERRIDE MEHTOD TO GET THE CUSTOM BEAN FOR EXECUTOR
+     *
+     * @author akshay
+     * 
+     * @com.indream.fundoo.configuration
+     * 
+     * @since Jul 24, 2018
+     *
+     */
+    @Override
+    public Executor getAsyncExecutor() {
+	return getExecutor();
+    }
 
-	@Override
-	public AsyncUncaughtExceptionHandler getAsyncUncaughtExceptionHandler() {
-		return new AynchExceptionHandler();
-	}
+    /*
+     * @purpose ASYNC EXCEPTION HANDLER IMPLEMENTATION PROVIDED
+     *
+     * @author akshay
+     * 
+     * @com.indream.fundoo.configuration
+     * 
+     * @since Jul 24, 2018
+     *
+     */
+    @Override
+    public AsyncUncaughtExceptionHandler getAsyncUncaughtExceptionHandler() {
+	return new AynchExceptionHandler();
+    }
 
 }

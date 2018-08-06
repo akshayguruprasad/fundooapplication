@@ -1,19 +1,19 @@
 package com.indream.fundoo.userservice.service;
 
-import com.indream.fundoo.userservice.dto.UserEntityDTO;
+import com.indream.fundoo.userservice.model.UserDto;
 
 public interface UserService {
 
-	void registerUser(UserEntityDTO user);
+	void registerUser(UserDto user);
 
 	void activateUser(String token);
 
-	String loginUser(UserEntityDTO user);
+	String loginUser(UserDto user);
 
 	void resetUserPassword(String id);
 
-	void updatePassword(String token, UserEntityDTO user);
+	void updatePassword(String token, UserDto user);
 
-	void deleteUser(UserEntityDTO userDto);
+	public void deleteUser(String token) ;
 
 }
